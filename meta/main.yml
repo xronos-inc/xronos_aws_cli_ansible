@@ -1,0 +1,10 @@
+galaxy_info:
+  role_name: xronos-aws-cli-ansible
+  company: Xronos, Inc.
+  description: "Ansible role to install aws-cli into Ubuntu."
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+collections:
+  - community.general
