@@ -5,24 +5,27 @@
   changed_when: false
   register: aws_cli_version
 
-- name: AWS CLI install
+- name: Download and extract installer
+  ansible.builtin.unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip
+    dest: /opt
+    remote_src: true
+  become: true
+
+- name: Install AWS CLI
+  ansible.builtin.command: /opt/aws/install
+  become: true
   when: aws_cli_version.rc != 0
-  block:
-    - name: Download and extract installer
-      ansible.builtin.unarchive:
-        src: https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip
-        dest: /tmp
-        remote_src: true
 
-    - name: Install AWS CLI
-      ansible.builtin.command: /tmp/aws/install
-      become: true
+- name: Verify AWS CLI version
+  ansible.builtin.command: aws --version
+  changed_when: false
 
-    - name: Cleanup installer
-      ansible.builtin.file:
-        path: /tmp/aws
-        state: absent
-
-    - name: Verify AWS CLI version
-      ansible.builtin.command: aws --version
-      changed_when: false
+# allows checking AWS SDK versions
+- name: pip install python packages
+  ansible.builtin.pip:
+    name:
+      - packaging
+      - boto3
+    state: latest
+  become: true
