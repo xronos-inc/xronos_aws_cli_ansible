@@ -1,3 +1,30 @@
 ---
-- name: AWS CLI install
-  ansible.builtin.import_tasks: aws-cli.yml
+- name: AWS CLI query version
+  ansible.builtin.command: aws --version
+  failed_when: false
+  changed_when: false
+  register: aws_cli_version
+
+- name: Download and extract installer
+  ansible.builtin.unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip
+    dest: /tmp
+    remote_src: true
+    creates: /tmp/aws/install
+
+- name: Install AWS CLI
+  ansible.builtin.command: /tmp/aws/install
+  become: true
+  when: aws_cli_version.rc != 0
+
+- name: Verify AWS CLI version
+  ansible.builtin.command: aws --version
+  changed_when: false
+
+# allows checking AWS SDK versions
+- name: pip install python packages
+  ansible.builtin.pip:
+    name:
+      - packaging
+      - boto3
+  become: true
