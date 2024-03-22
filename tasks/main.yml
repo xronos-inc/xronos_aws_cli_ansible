@@ -8,12 +8,12 @@
 - name: Download and extract installer
   ansible.builtin.unarchive:
     src: https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip
-    dest: /tmp
+    dest: "{{ ansible_env.HOME }}/.cache"
     remote_src: true
-    creates: /tmp/aws/install
+    creates: "{{ ansible_env.HOME }}/.cache/aws/install"
 
 - name: Install AWS CLI
-  ansible.builtin.command: /tmp/aws/install
+  ansible.builtin.command: "{{ ansible_env.HOME }}/.cache/aws/install"
   become: true
   when: aws_cli_version.rc != 0
 
