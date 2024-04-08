@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: xronos_aws_cli_ansible
   min_ansible_version: "2.15"
-  company: Xronos, Inc.
+  company: Xronos Inc.
   license: BSD-3
   description: "Ansible role to install aws-cli into Ubuntu."
   platforms:
