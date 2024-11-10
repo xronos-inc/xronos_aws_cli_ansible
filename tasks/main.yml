@@ -24,9 +24,9 @@
   changed_when: false
 
 # allows checking AWS SDK versions
-- name: pip install python packages
-  ansible.builtin.pip:
-    name:
-      - packaging
-      - boto3
+- name: apt install python packages
+  ansible.builtin.apt:
+    pkg:
+      - python3-packaging
+      - python3-boto3
   become: true
