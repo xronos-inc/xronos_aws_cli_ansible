@@ -1,5 +1,11 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: © 2022 Creator, Inc.
+# SPDX-License-Identifier: MIT
+#
+# Modifications Copyright © 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
+#
+# This file contains portions from Creator, Inc. under MIT 
+# and modifications by Xronos Inc. under BSD-3-Clause.
 ---
 - name: AWS CLI query version
   ansible.builtin.command: aws --version
