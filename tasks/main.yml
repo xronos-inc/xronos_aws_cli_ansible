@@ -1,38 +1,46 @@
-# SPDX-FileCopyrightText: © 2022 Creator, Inc.
+# SPDX-FileCopyrightText: (c) 2022 Creator, Inc.
 # SPDX-License-Identifier: MIT
 #
-# Modifications Copyright © 2024 Xronos Inc.
+# Modifications Copyright (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # This file contains portions from Creator, Inc. under MIT 
 # and modifications by Xronos Inc. under BSD-3-Clause.
 ---
 - name: AWS CLI query version
-  ansible.builtin.command: aws --version
+  register: _aws_version_check
   failed_when: false
   changed_when: false
-  register: aws_cli_version
+  ansible.builtin.command: aws --version
 
+# https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip if no version specified
+# https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.36.3 if version specified
 - name: Download and extract installer
+  when: _aws_version_check.rc != 0
+    or ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
   ansible.builtin.unarchive:
-    src: https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip
+    src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}{{ '-%s' | format(aws_cli_version) if aws_cli_version else '' }}.zip"
     dest: "{{ ansible_env.HOME }}/.cache"
     remote_src: true
-    creates: "{{ ansible_env.HOME }}/.cache/aws/install"
 
-- name: Install AWS CLI
-  ansible.builtin.command: "{{ ansible_env.HOME }}/.cache/aws/install"
+- name: Install AWS CLI {{ aws_cli_version if aws_cli_version else 'latest' }}
+  when: _aws_version_check.rc != 0
+    or ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
   become: true
-  when: aws_cli_version.rc != 0
+  ansible.builtin.command:
+    chdir: "{{ ansible_env.HOME }}/.cache/aws/"
+    cmd: ./install --update
 
 - name: Verify AWS CLI version
-  ansible.builtin.command: aws --version
+  register: _aws_version_check
+  failed_when: ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
   changed_when: false
+  ansible.builtin.command: aws --version
 
 # allows checking AWS SDK versions
 - name: apt install python packages
+  become: true
   ansible.builtin.apt:
     pkg:
       - python3-packaging
       - python3-boto3
-  become: true
