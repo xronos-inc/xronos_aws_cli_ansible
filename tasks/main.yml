@@ -13,29 +13,43 @@
   changed_when: false
   ansible.builtin.command: aws --version
 
-# https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip if no version specified
-# https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.36.3 if version specified
-- name: Download and extract installer
+- name: Install AWS CLI {{ aws_cli_version }}
   when: _aws_version_check.rc != 0
     or ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
-  ansible.builtin.unarchive:
-    src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}{{ '-%s' | format(aws_cli_version) if aws_cli_version else '' }}.zip"
-    dest: "{{ ansible_env.HOME }}/.cache"
-    remote_src: true
+  block:
+    - name: Stat ~/.cache
+      register: _cache_folder_query
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.cache"
 
-- name: Install AWS CLI {{ aws_cli_version if aws_cli_version else 'latest' }}
-  when: _aws_version_check.rc != 0
-    or ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
-  become: true
-  ansible.builtin.command:
-    chdir: "{{ ansible_env.HOME }}/.cache/aws/"
-    cmd: ./install --update
+    - name: Create ~/.cache
+      when: not _cache_folder_query.stat.exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.cache"
+        state: directory
+        mode: u=rwx,g=,o=
 
-- name: Verify AWS CLI version
-  register: _aws_version_check
-  failed_when: ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
-  changed_when: false
-  ansible.builtin.command: aws --version
+    # https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip if no version specified
+    # https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.36.3 if version specified
+    - name: Download and extract installer
+      ansible.builtin.unarchive:
+        src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}{{ '-%s' | format(aws_cli_version) if aws_cli_version else '' }}.zip"
+        dest: "{{ ansible_env.HOME }}/.cache"
+        remote_src: true
+
+    - name: Install AWS CLI {{ aws_cli_version if aws_cli_version else 'latest' }}
+      when: _aws_version_check.rc != 0
+        or ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
+      become: true
+      ansible.builtin.command:
+        chdir: "{{ ansible_env.HOME }}/.cache/aws/"
+        cmd: ./install --update
+
+    - name: Verify AWS CLI version
+      register: _aws_version_check
+      failed_when: ('aws-cli/' ~ aws_cli_version) not in _aws_version_check.stdout
+      changed_when: false
+      ansible.builtin.command: aws --version
 
 # allows checking AWS SDK versions
 - name: apt install python packages
